@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model company {
+  id          String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  description String?     @db.VarChar(255)
+  image       String?     @db.VarChar(255)
+  name        String      @db.VarChar(255)
+  created_at  DateTime    @default(now()) @db.Timestamp(6)
+  updated_at  DateTime    @default(now()) @db.Timestamp(6)
+  user_id     String      @db.Uuid
+  tenant_id   String      @db.VarChar(255)
+  user        user        @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inventory   inventory[]
+  product     product[]
+  warehouse   warehouse[]
+}
+
+model inventory {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  product_id  String   @db.Uuid
+  stock_level Int
+  company_id  String   @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  company     company  @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product     product  @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model product {
+  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name              String              @db.VarChar(255)
+  traceability_code String              @db.VarChar(255)
+  company_id        String              @db.Uuid
+  created_at        DateTime            @default(now()) @db.Timestamp(6)
+  updated_at        DateTime            @default(now()) @db.Timestamp(6)
+  inventory         inventory[]
+  company           company             @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouse_product warehouse_product[]
+}
+
+model user {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email       String    @unique @db.VarChar(255)
+  firstName   String?   @db.VarChar(255)
+  lastName    String?   @db.VarChar(255)
+  roq_user_id String    @db.VarChar(255)
+  tenant_id   String    @db.VarChar(255)
+  created_at  DateTime  @default(now()) @db.Timestamp(6)
+  updated_at  DateTime  @default(now()) @db.Timestamp(6)
+  company     company[]
+}
+
+model warehouse {
+  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  location          String              @db.VarChar(255)
+  company_id        String              @db.Uuid
+  created_at        DateTime            @default(now()) @db.Timestamp(6)
+  updated_at        DateTime            @default(now()) @db.Timestamp(6)
+  company           company             @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouse_product warehouse_product[]
+}
+
+model warehouse_product {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  warehouse_id String    @db.Uuid
+  product_id   String    @db.Uuid
+  quantity     Int
+  created_at   DateTime  @default(now()) @db.Timestamp(6)
+  updated_at   DateTime  @default(now()) @db.Timestamp(6)
+  product      product   @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouse    warehouse @relation(fields: [warehouse_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
